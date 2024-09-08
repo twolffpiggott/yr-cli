@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 from urllib.parse import quote_plus
 
@@ -62,7 +63,7 @@ def get_location(query: str, limit: int, country_code: str):
 
 
 @app.command()
-def weather(
+def now(
     location: Optional[str] = typer.Argument(None),
     limit: int = typer.Option(10, help="Maximum number of location results"),
     country_code: str = typer.Option("za", help="Country code for location search"),
@@ -90,22 +91,30 @@ def weather(
     forecast = yr_client.get_forecast(
         lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
     )
-    current_hour = forecast.now()
-    temp = current_hour.details.air_temperature
-    rain = current_hour.next_hour.details.precipitation_amount
-    wind_speed = current_hour.details.wind_speed
-    cloud_area_fraction = current_hour.details.cloud_area_fraction
-    summary = current_hour.next_hour.summary.symbol_code
 
-    weather_table = Table(box=box.ROUNDED, expand=False, show_header=False)
-    weather_table.add_column("Property", style="cyan", no_wrap=True)
-    weather_table.add_column("Value", style="yellow")
+    weather_table = Table(box=box.ROUNDED, expand=False, show_header=True)
+    weather_table.add_column("Time", style="cyan", no_wrap=True)
+    weather_table.add_column("Summary", style="yellow")
+    weather_table.add_column("Temp", style="red", no_wrap=True)
+    weather_table.add_column("Rain", style="blue", no_wrap=True)
+    weather_table.add_column("Wind", style="green", no_wrap=True)
+    weather_table.add_column("Cloud", style="magenta", no_wrap=True)
 
-    weather_table.add_row("🌡️ Temperature", f"{temp}°C")
-    weather_table.add_row("🌦️ Summary", summary.replace("_", " ").title())
-    weather_table.add_row("🌧️ Rain (next hour)", f"{rain} mm")
-    weather_table.add_row("💨 Wind speed", f"{wind_speed} m/s")
-    weather_table.add_row("☁️ Cloud cover", f"{cloud_area_fraction}%")
+    now = datetime.now().astimezone()
+    for hour in range(now.hour, 24):
+        time = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+
+        forecast_data = forecast.get_forecast_time(time.astimezone(timezone.utc))
+        summary = forecast_data.next_hour.summary.symbol_code.replace("_", " ").title()
+        temp = f"{forecast_data.details.air_temperature:.1f}°C"
+        precipitation_amount = forecast_data.next_hour.details.precipitation_amount
+        rain = "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
+        wind = f"{forecast_data.details.wind_speed:.1f} m/s"
+        cloud = f"{forecast_data.details.cloud_area_fraction:.0f}%"
+
+        time_str = "Now" if hour == now.hour else time.strftime("%H:%M")
+
+        weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
 
     location_text = Text()
     location_text.append("📍 ", style="bold green")
@@ -115,7 +124,7 @@ def weather(
 
     weather_panel = Panel(
         content,
-        title="[bold blue]Weather Information[/bold blue]",
+        title=f"[bold blue]Weather Forecast for {now.date().strftime('%A %d. %B')}[/bold blue]",
         expand=False,
         border_style="blue",
     )
