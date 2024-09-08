@@ -11,6 +11,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+import cache
+
 app = typer.Typer()
 console = Console()
 
@@ -18,7 +20,7 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 USER_AGENT_HEADER = {"User-Agent": "YrCLI/0.1 github.com/yr-cli"}
 
 
-def get_locations(query: str, limit: int = 10, country_code: str = "za") -> List[dict]:
+def get_locations(query: str, limit: int, country_code: str) -> List[dict]:
     encoded_query = quote_plus(query)
     params = {
         "q": encoded_query,
@@ -47,25 +49,37 @@ def select_location(locations: List[dict]) -> dict:
     return answers["location"]
 
 
+def get_location(query: str, limit: int, country_code: str):
+    locations = get_locations(query, limit, country_code)
+    if not locations:
+        console.print("[bold red]Error:[/bold red] No locations found.")
+        return
+    if len(locations) > 1:
+        selected_location = select_location(locations)
+    else:
+        selected_location = locations[0]
+    return selected_location
+
+
 @app.command()
 def weather(
     location: Optional[str] = typer.Argument(None),
     limit: int = typer.Option(10, help="Maximum number of location results"),
     country_code: str = typer.Option("za", help="Country code for location search"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass cache and fetch fresh data"),
 ):
     if location is None:
         location = prompt_location()
 
-    locations = get_locations(location, limit, country_code)
-
-    if not locations:
-        console.print("[bold red]Error:[/bold red] No locations found.")
-        return
-
-    if len(locations) > 1:
-        selected_location = select_location(locations)
+    if not no_cache:
+        cached_location = cache.get_cached_location(location)
+        if cached_location:
+            selected_location = cached_location
+        else:
+            selected_location = get_location(location, limit, country_code)
+            cache.cache_location(location, selected_location)
     else:
-        selected_location = locations[0]
+        selected_location = get_location(location, limit, country_code)
 
     yr_client = yr_weather.Locationforecast(headers=USER_AGENT_HEADER)
     forecast = yr_client.get_forecast(
@@ -92,7 +106,7 @@ def weather(
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["display_name"], style="bold")
 
-    content = Group(location_text, "", weather_table)  # Empty string for a newline
+    content = Group(location_text, "", weather_table)
 
     weather_panel = Panel(
         content,
