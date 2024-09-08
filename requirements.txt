@@ -1,0 +1,6 @@
+inquirer==3.4.0
+requests==2.32.3
+rich==13.8.03
+typer==0.12.5
+urllib3==2.2.2
+yr-weather==0.4.0
