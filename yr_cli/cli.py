@@ -83,6 +83,9 @@ def weather(
     else:
         selected_location = get_location(location, limit, country_code)
 
+    if not selected_location:
+        return
+
     yr_client = yr_weather.Locationforecast(headers=USER_AGENT_HEADER)
     forecast = yr_client.get_forecast(
         lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
