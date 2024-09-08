@@ -5,8 +5,11 @@ import inquirer
 import requests
 import typer
 import yr_weather
-from rich.console import Console
+from rich import box
+from rich.console import Console, Group
 from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
 
 app = typer.Typer()
 console = Console()
@@ -75,16 +78,30 @@ def weather(
     cloud_area_fraction = current_hour.details.cloud_area_fraction
     summary = current_hour.next_hour.summary.symbol_code
 
-    weather_info = f"""
-    [bold]Location:[/bold] {selected_location['display_name']}
-    [bold]Temperature:[/bold] {temp}°C
-    [bold]Summary:[/bold] {summary}
-    [bold]Rain:[/bold] {rain} mm
-    [bold]Wind speed:[/bold] {wind_speed} m/s
-    [bold]Cloud area fraction:[/bold] {cloud_area_fraction}%
-    """
+    weather_table = Table(box=box.ROUNDED, expand=False, show_header=False)
+    weather_table.add_column("Property", style="cyan", no_wrap=True)
+    weather_table.add_column("Value", style="yellow")
 
-    console.print(Panel(weather_info, title="Weather Information", expand=False))
+    weather_table.add_row("🌡️ Temperature", f"{temp}°C")
+    weather_table.add_row("🌦️ Summary", summary.replace("_", " ").title())
+    weather_table.add_row("🌧️ Rain (next hour)", f"{rain} mm")
+    weather_table.add_row("💨 Wind speed", f"{wind_speed} m/s")
+    weather_table.add_row("☁️ Cloud cover", f"{cloud_area_fraction}%")
+
+    location_text = Text()
+    location_text.append("📍 ", style="bold green")
+    location_text.append(selected_location["display_name"], style="bold")
+
+    content = Group(location_text, "", weather_table)  # Empty string for a newline
+
+    weather_panel = Panel(
+        content,
+        title="[bold blue]Weather Information[/bold blue]",
+        expand=False,
+        border_style="blue",
+    )
+
+    console.print(weather_panel)
 
 
 if __name__ == "__main__":
