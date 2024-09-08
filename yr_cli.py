@@ -66,7 +66,9 @@ def weather(
     location: Optional[str] = typer.Argument(None),
     limit: int = typer.Option(10, help="Maximum number of location results"),
     country_code: str = typer.Option("za", help="Country code for location search"),
-    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass cache and fetch fresh data"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Bypass cache and fetch fresh data"
+    ),
 ):
     if location is None:
         location = prompt_location()
@@ -116,6 +118,15 @@ def weather(
     )
 
     console.print(weather_panel)
+
+
+@app.command()
+def clear_cache():
+    """Clear the entire location cache."""
+    if cache.clear_cache():
+        console.print("[bold green]Cache cleared successfully![/bold green]")
+    else:
+        console.print("[bold red]Failed to clear cache.[/bold red]")
 
 
 if __name__ == "__main__":

@@ -40,3 +40,10 @@ def cache_location(query: str, location: dict):
             "INSERT OR REPLACE INTO locations (query, location_data) VALUES (?, json(?))",
             (query, json.dumps(location)),
         )
+
+
+def clear_cache():
+    init_db()
+    with sqlite3.connect(CACHE_DB) as conn:
+        conn.execute("DELETE FROM locations")
+    return True
