@@ -91,15 +91,15 @@ def now(
     if location is None:
         location = prompt_location()
 
-    if not no_cache:
+    if no_cache:
+        selected_location = get_location(location, limit, country_code)
+    else:
         cached_location = cache.get_cached_location(location)
         if cached_location:
             selected_location = cached_location
         else:
             selected_location = get_location(location, limit, country_code)
             cache.cache_location(location, selected_location)
-    else:
-        selected_location = get_location(location, limit, country_code)
 
     if not selected_location:
         return
