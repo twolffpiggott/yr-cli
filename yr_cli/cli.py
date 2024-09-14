@@ -157,6 +157,86 @@ def now(
 
 
 @app.command()
+def summary(
+    location: Optional[str] = typer.Argument(None),
+    days: Optional[int] = typer.Option(3, help="Number of days for summary forecast"),
+    limit: int = typer.Option(10, help="Maximum number of location results"),
+    country_code: str = typer.Option("za", help="Country code for location search"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Bypass cache and fetch fresh data"
+    ),
+):
+    if location is None:
+        location = prompt_location()
+
+    if no_cache:
+        selected_location = get_location(location, limit, country_code)
+    else:
+        cached_location = cache.get_cached_location(location)
+        if cached_location:
+            selected_location = cached_location
+        else:
+            selected_location = get_location(location, limit, country_code)
+            cache.cache_location(location, selected_location)
+
+    if not selected_location:
+        return
+
+    yr_client = yr_weather.Locationforecast(headers=USER_AGENT_HEADER)
+    forecast = yr_client.get_forecast(
+        lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
+    )
+
+    location_text = Text()
+    location_text.append("📍 ", style="bold green")
+    location_text.append(selected_location["name"], style="bold")
+    content = Group(location_text, "")
+
+    now = datetime.now().astimezone()
+    for day in range(days):
+        forecast_times = [
+            now.replace(hour=hour, minute=0, second=0, microsecond=0)
+            + timedelta(days=day)
+            for hour in [2, 8, 14, 20]
+        ]
+        weather_table = create_weather_table(forecast_times[0].date())
+        for forecast_time in forecast_times:
+            if forecast_time < now:
+                continue
+            forecast_data = forecast.get_forecast_time(
+                forecast_time.astimezone(timezone.utc)
+            )
+            summary = forecast_data.next_6_hours.summary.symbol_code.replace(
+                "_", " "
+            ).title()
+            temp = f"{forecast_data.details.air_temperature:.1f}°C"
+            precipitation_amount = (
+                forecast_data.next_6_hours.details.precipitation_amount
+            )
+            rain = (
+                "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
+            )
+            wind = f"{forecast_data.details.wind_speed:.1f} m/s"
+            cloud = f"{forecast_data.details.cloud_area_fraction:.0f}%"
+            time_str = f"{_get_24_hr_fmt(forecast_time.hour)}-{_get_24_hr_fmt(forecast_time.hour+6)}"
+            weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
+        content.renderables.append(weather_table)
+
+    weather_panel = Panel(
+        content,
+        title="[bold blue]Summary Weather Forecast[/bold blue]",
+        expand=False,
+        border_style="blue",
+    )
+
+    console.print(weather_panel)
+
+
+def _get_24_hr_fmt(hour: int) -> str:
+    return f"{hour%24:0>2}"
+
+
+@app.command()
 def clear_cache():
     """Clear the entire location cache."""
     if cache.clear_cache():
