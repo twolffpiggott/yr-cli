@@ -1,7 +1,28 @@
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
+from ..api import get_location_forecast
 from .type import ForecastTimeStep, METJSONForecast
+
+
+def fetch_and_filter_forecast(
+    selected_location: dict, time_series: List[datetime]
+) -> Dict[datetime, dict]:
+    forecast: METJSONForecast = get_location_forecast(
+        lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
+    )
+    filtered_forecast_timesteps = filter_location_forecast(
+        forecast,
+        time_series,
+        keys=[
+            ["next_6_hours", "summary", "symbol_code"],
+            ["instant", "details", "air_temperature"],
+            ["next_6_hours", "details", "precipitation_amount"],
+            ["instant", "details", "wind_speed"],
+            ["instant", "details", "cloud_area_fraction"],
+        ],
+    )
+    return filtered_forecast_timesteps
 
 
 def filter_location_forecast(
