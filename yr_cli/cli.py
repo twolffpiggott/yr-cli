@@ -1,11 +1,12 @@
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import List, Optional
 from urllib.parse import quote_plus
 
 import inquirer
 import requests
 import typer
-import yr_weather
+from requests_cache import CachedSession
 from rich import box
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -13,6 +14,8 @@ from rich.table import Table
 from rich.text import Text
 
 from . import cache
+from .locationforecast.data import filter_location_forecast
+from .locationforecast.type import METJSONForecast
 
 app = typer.Typer()
 console = Console()
@@ -33,6 +36,21 @@ def get_locations(query: str, limit: int, country_code: str) -> List[dict]:
     return response.json()
 
 
+def get_location_forecast(lat: int, lon: int) -> METJSONForecast:
+    session = CachedSession(
+        (Path.home() / ".met_cache.sqlite").as_posix(),
+        cache_control=True,
+        expire_after=timedelta(days=1),
+    )
+    response = session.get(
+        f"https://api.met.no/weatherapi/locationforecast/2.0/complete?lat={lat}&lon={lon}",
+        headers=USER_AGENT_HEADER,
+    )
+    response.raise_for_status()
+    location_forecast: METJSONForecast = response.json()
+    return location_forecast
+
+
 def prompt_location() -> str:
     questions = [inquirer.Text("location", message="Enter a location")]
     answers = inquirer.prompt(questions)
@@ -50,7 +68,7 @@ def select_location(locations: List[dict]) -> dict:
     return answers["location"]
 
 
-def get_location(query: str, limit: int, country_code: str):
+def get_location(query: str, limit: int, country_code: str) -> str:
     locations = get_locations(query, limit, country_code)
     if not locations:
         console.print("[bold red]Error:[/bold red] No locations found.")
@@ -104,48 +122,47 @@ def now(
     if not selected_location:
         return
 
-    yr_client = yr_weather.Locationforecast(headers=USER_AGENT_HEADER)
-    forecast = yr_client.get_forecast(
+    forecast: METJSONForecast = get_location_forecast(
         lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
     )
 
     now = datetime.now().astimezone()
-    end_time = now + timedelta(hours=24)
+    start_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    time_series = [start_time + timedelta(hours=hours) for hours in range(25)]
+    filtered_forecast_timesteps = filter_location_forecast(
+        forecast,
+        time_series,
+        keys=[
+            ["next_6_hours", "summary", "symbol_code"],
+            ["instant", "details", "air_temperature"],
+            ["next_6_hours", "details", "precipitation_amount"],
+            ["instant", "details", "wind_speed"],
+            ["instant", "details", "cloud_area_fraction"],
+        ],
+    )
 
+    current_day = now.date()
     location_text = Text()
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["name"], style="bold")
-
     content = Group(location_text, "")
-
-    current_day = now.date()
     weather_table = create_weather_table(current_day)
-
-    while now < end_time:
-        now = now.replace(minute=0, second=0, microsecond=0)
-        if now.date() != current_day:
-            if weather_table:
+    for forecast_timestep_time, filtered_data in filtered_forecast_timesteps.items():
+        if forecast_timestep_time.date() != current_day:
+            current_day = forecast_timestep_time.date()
+            if weather_table.rows:
                 content.renderables.append(weather_table)
-            current_day = now.date()
-            weather_table = create_weather_table(current_day)
-
-        forecast_data = forecast.get_forecast_time(now.astimezone(timezone.utc))
-        summary = forecast_data.next_hour.summary.symbol_code.replace("_", " ").title()
-        temp = f"{forecast_data.details.air_temperature:.1f}°C"
-        precipitation_amount = forecast_data.next_hour.details.precipitation_amount
+                weather_table = create_weather_table(current_day)
+        summary = filtered_data["symbol_code"].replace("_", " ").title()
+        temp = f"{filtered_data['air_temperature']:.1f}°C"
+        precipitation_amount = filtered_data["precipitation_amount"]
         rain = "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
-        wind = f"{forecast_data.details.wind_speed:.1f} m/s"
-        cloud = f"{forecast_data.details.cloud_area_fraction:.0f}%"
-
-        time_str = "Now" if now == datetime.now().astimezone() else now.strftime("%H")
-
+        wind = f"{filtered_data['wind_speed']:.1f} m/s"
+        cloud = f"{filtered_data['cloud_area_fraction']:.0f}%"
+        time_str = f"{_get_24_hr_fmt(forecast_timestep_time.hour)}"
         weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
-
-        now += timedelta(hours=1)
-
-    if weather_table:
+    if weather_table.rows:
         content.renderables.append(weather_table)
-
     weather_panel = Panel(
         content,
         title="[bold blue]24-Hour Weather Forecast[/bold blue]",
@@ -182,44 +199,67 @@ def summary(
     if not selected_location:
         return
 
-    yr_client = yr_weather.Locationforecast(headers=USER_AGENT_HEADER)
-    forecast = yr_client.get_forecast(
+    forecast: METJSONForecast = get_location_forecast(
         lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
+    )
+
+    now = datetime.now().astimezone()
+    utc_now = now.astimezone(timezone.utc)
+    utc_start_time = utc_now.replace(minute=0, second=0, microsecond=0) + timedelta(
+        hours=1
+    )
+    utc_start_hour = utc_start_time.hour
+    time_series = []
+    for day in range(days):
+        hours = [0, 6, 12, 18]
+        if day == 0:
+            hours = [utc_start_hour] + [hour for hour in hours if hour > utc_start_hour]
+        time_series.extend(
+            [
+                utc_start_time.replace(
+                    hour=hour, minute=0, second=0, microsecond=0
+                ).astimezone()
+                + timedelta(days=day)
+                for hour in hours
+            ]
+        )
+    filtered_forecast_timesteps = filter_location_forecast(
+        forecast,
+        time_series,
+        keys=[
+            ["next_6_hours", "summary", "symbol_code"],
+            ["instant", "details", "air_temperature"],
+            ["next_6_hours", "details", "precipitation_amount"],
+            ["instant", "details", "wind_speed"],
+            ["instant", "details", "cloud_area_fraction"],
+        ],
     )
 
     location_text = Text()
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["name"], style="bold")
     content = Group(location_text, "")
-
-    now = datetime.now().astimezone()
-    for day in range(days):
-        forecast_times = [
-            now.replace(hour=hour, minute=0, second=0, microsecond=0)
-            + timedelta(days=day)
-            for hour in [2, 8, 14, 20]
-        ]
-        weather_table = create_weather_table(forecast_times[0].date())
-        for forecast_time in forecast_times:
-            if forecast_time < now:
-                continue
-            forecast_data = forecast.get_forecast_time(
-                forecast_time.astimezone(timezone.utc)
-            )
-            summary = forecast_data.next_6_hours.summary.symbol_code.replace(
-                "_", " "
-            ).title()
-            temp = f"{forecast_data.details.air_temperature:.1f}°C"
-            precipitation_amount = (
-                forecast_data.next_6_hours.details.precipitation_amount
-            )
-            rain = (
-                "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
-            )
-            wind = f"{forecast_data.details.wind_speed:.1f} m/s"
-            cloud = f"{forecast_data.details.cloud_area_fraction:.0f}%"
-            time_str = f"{_get_24_hr_fmt(forecast_time.hour)}-{_get_24_hr_fmt(forecast_time.hour+6)}"
-            weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
+    current_day = now.date()
+    location_text = Text()
+    location_text.append("📍 ", style="bold green")
+    location_text.append(selected_location["name"], style="bold")
+    content = Group(location_text, "")
+    weather_table = create_weather_table(current_day)
+    for forecast_timestep_time, filtered_data in filtered_forecast_timesteps.items():
+        if forecast_timestep_time.date() != current_day:
+            current_day = forecast_timestep_time.date()
+            if weather_table.rows:
+                content.renderables.append(weather_table)
+                weather_table = create_weather_table(current_day)
+        summary = filtered_data["symbol_code"].replace("_", " ").title()
+        temp = f"{filtered_data['air_temperature']:.1f}°C"
+        precipitation_amount = filtered_data["precipitation_amount"]
+        rain = "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
+        wind = f"{filtered_data['wind_speed']:.1f} m/s"
+        cloud = f"{filtered_data['cloud_area_fraction']:.0f}%"
+        time_str = f"{_get_24_hr_fmt(forecast_timestep_time.hour)}"
+        weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
+    if weather_table.rows:
         content.renderables.append(weather_table)
 
     weather_panel = Panel(
