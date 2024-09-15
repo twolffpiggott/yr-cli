@@ -141,7 +141,7 @@ def now(
         ],
     )
 
-    current_day = now.date()
+    current_day = time_series[0].date()
     location_text = Text()
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["name"], style="bold")
@@ -176,7 +176,7 @@ def now(
 @app.command()
 def summary(
     location: Optional[str] = typer.Argument(None),
-    days: Optional[int] = typer.Option(3, help="Number of days for summary forecast"),
+    days: Optional[int] = typer.Option(5, help="Number of days for summary forecast"),
     limit: int = typer.Option(10, help="Maximum number of location results"),
     country_code: str = typer.Option("za", help="Country code for location search"),
     no_cache: bool = typer.Option(
@@ -239,7 +239,7 @@ def summary(
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["name"], style="bold")
     content = Group(location_text, "")
-    current_day = now.date()
+    current_day = time_series[0].date()
     location_text = Text()
     location_text.append("📍 ", style="bold green")
     location_text.append(selected_location["name"], style="bold")
@@ -265,6 +265,118 @@ def summary(
     weather_panel = Panel(
         content,
         title="[bold blue]Summary Weather Forecast[/bold blue]",
+        expand=False,
+        border_style="blue",
+    )
+
+    console.print(weather_panel)
+
+
+@app.command()
+def weekend(
+    location: Optional[str] = typer.Argument(None),
+    limit: int = typer.Option(10, help="Maximum number of location results"),
+    country_code: str = typer.Option("za", help="Country code for location search"),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Bypass cache and fetch fresh data"
+    ),
+):
+    if location is None:
+        location = prompt_location()
+
+    if no_cache:
+        selected_location = get_location(location, limit, country_code)
+    else:
+        cached_location = cache.get_cached_location(location)
+        if cached_location:
+            selected_location = cached_location
+        else:
+            selected_location = get_location(location, limit, country_code)
+            cache.cache_location(location, selected_location)
+
+    if not selected_location:
+        return
+
+    forecast: METJSONForecast = get_location_forecast(
+        lat=float(selected_location["lat"]), lon=float(selected_location["lon"])
+    )
+
+    now = datetime.now().astimezone()
+    start_time = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    time_series = []
+    current_day = now.date()
+    days_ahead = 4 - current_day.weekday()
+    if days_ahead <= 0:
+        days_ahead += 7
+    start_time = start_time + timedelta(days=days_ahead)
+    utc_start_time = start_time.astimezone(timezone.utc).replace(
+        minute=0, second=0, microsecond=0
+    ) + timedelta(hours=1)
+    utc_start_hour = utc_start_time.hour
+    hours = list(range(24))
+    utc_summary_hours = [0, 6, 12, 18]
+    for day in range(3):
+        if days_ahead <= 2:
+            if days_ahead == 0:
+                hours = [utc_start_hour] + [
+                    hour for hour in hours if hour > utc_start_hour
+                ]
+            hours_for_day = [
+                start_time.replace(hour=hour, minute=0, second=0, microsecond=0)
+                + timedelta(days=day)
+                for hour in hours
+            ]
+        else:
+            hours_for_day = [
+                utc_start_time.replace(
+                    hour=hour, minute=0, second=0, microsecond=0
+                ).astimezone()
+                + timedelta(days=day)
+                for hour in utc_summary_hours
+            ]
+        time_series.extend(hours_for_day)
+    filtered_forecast_timesteps = filter_location_forecast(
+        forecast,
+        time_series,
+        keys=[
+            ["next_6_hours", "summary", "symbol_code"],
+            ["instant", "details", "air_temperature"],
+            ["next_6_hours", "details", "precipitation_amount"],
+            ["instant", "details", "wind_speed"],
+            ["instant", "details", "cloud_area_fraction"],
+        ],
+    )
+
+    location_text = Text()
+    location_text.append("📍 ", style="bold green")
+    location_text.append(selected_location["name"], style="bold")
+    content = Group(location_text, "")
+    current_day = time_series[0].date()
+    location_text = Text()
+    location_text.append("📍 ", style="bold green")
+    location_text.append(selected_location["name"], style="bold")
+    content = Group(location_text, "")
+    weather_table = create_weather_table(current_day)
+    for forecast_timestep_time, filtered_data in filtered_forecast_timesteps.items():
+        if forecast_timestep_time.date() != current_day:
+            current_day = forecast_timestep_time.date()
+            if weather_table.rows:
+                content.renderables.append(weather_table)
+                weather_table = create_weather_table(current_day)
+        summary = filtered_data["symbol_code"].replace("_", " ").title()
+        temp = f"{filtered_data['air_temperature']:.1f}°C"
+        precipitation_amount = filtered_data["precipitation_amount"]
+        rain = "" if float(precipitation_amount) == 0 else f"{precipitation_amount} mm"
+        wind = f"{filtered_data['wind_speed']:.1f} m/s"
+        cloud = f"{filtered_data['cloud_area_fraction']:.0f}%"
+        time_str = f"{_get_24_hr_fmt(forecast_timestep_time.hour)}"
+        weather_table.add_row(time_str, summary, temp, rain, wind, cloud)
+    if weather_table.rows:
+        content.renderables.append(weather_table)
+
+    weather_panel = Panel(
+        content,
+        title="[bold blue]Weekend Weather Forecast[/bold blue]",
         expand=False,
         border_style="blue",
     )
