@@ -23,7 +23,6 @@ def filter_location_forecast(
                 filter_start_index = filter_index + 1
                 break
             if utc_timestamp < forecast_timestep_time:
-                import ipdb; ipdb.set_trace()
                 raise ValueError(f"Time {utc_timestamp} not found")
         values = nested_lookup(forecast_timestep_data, keys)
         filtered_results[time] = values
