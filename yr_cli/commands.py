@@ -1,7 +1,13 @@
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from .interface import display_weather, get_selected_location, handle_command_errors
+from .interface import (
+    display_weather,
+    get_selected_location,
+    handle_command_errors,
+    print_weather_table,
+)
 from .locationforecast.data import fetch_and_filter_forecast
 
 
@@ -19,11 +25,14 @@ def now_command(location: Optional[str], limit: int, country_code: str, no_cache
         selected_location, time_series
     )
 
-    display_weather(
-        filtered_forecast_timesteps,
-        selected_location,
-        "24-Hour Weather Forecast",
-    )
+    if "ITERM_SESSION_ID" in os.environ:
+        print_weather_table(filtered_forecast_timesteps)
+    else:
+        display_weather(
+            filtered_forecast_timesteps,
+            selected_location,
+            "24-Hour Weather Forecast",
+        )
 
 
 @handle_command_errors
@@ -60,11 +69,14 @@ def summary_command(
         selected_location, time_series
     )
 
-    display_weather(
-        filtered_forecast_timesteps,
-        selected_location,
-        "Summary Weather Forecast",
-    )
+    if "ITERM_SESSION_ID" in os.environ:
+        print_weather_table(filtered_forecast_timesteps)
+    else:
+        display_weather(
+            filtered_forecast_timesteps,
+            selected_location,
+            "Summary Weather Forecast",
+        )
 
 
 @handle_command_errors
@@ -119,8 +131,11 @@ def weekend_command(
         selected_location, time_series
     )
 
-    display_weather(
-        filtered_forecast_timesteps,
-        selected_location,
-        "Weekend Weather Forecast",
-    )
+    if "ITERM_SESSION_ID" in os.environ:
+        print_weather_table(filtered_forecast_timesteps)
+    else:
+        display_weather(
+            filtered_forecast_timesteps,
+            selected_location,
+            "Weekend Weather Forecast",
+        )

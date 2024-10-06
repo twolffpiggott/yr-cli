@@ -1,8 +1,13 @@
+import base64
+import io
+import sys
 from datetime import date, datetime
 from functools import wraps
+from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import inquirer
+from PIL import Image
 from rich import box
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -10,10 +15,64 @@ from rich.table import Table
 from rich.text import Text
 from rich.traceback import install
 
+from . import get_icon_path
 from .api import get_openstreetmap_locations
 from .cache import cache_location, clear_cache, get_cached_location
 
+OSC = b"\033]"
+ST = b"\007"
+
+
+class AnsiStyles:
+    RESET = b"\033[0m"
+    BOLD = b"\033[1m"
+    RED = b"\033[31m"
+    LIGHT_BLUE = b"\033[94m"
+    YELLOW = b"\033[33m"
+    DEFAULT = b""
+
+
 console = Console()
+
+
+def encode_image(image_path: str, max_width: int = 2, max_height: int = 1) -> bytes:
+    with Image.open(image_path) as img:
+        img.thumbnail((max_width * 10, max_height * 20))
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue())
+        return b"".join(
+            [
+                OSC,
+                b"1337;File=inline=1;width=",
+                str(max_width).encode(),
+                b";height=",
+                str(max_height).encode(),
+                b":",
+                img_str,
+                ST,
+            ]
+        )
+
+
+def format_table_row(
+    columns: list, image_column: Optional[int] = None, image_path: Optional[str] = None
+) -> bytes:
+    row = []
+    for i, (col, width, color) in enumerate(columns):
+        if i == image_column and image_path:
+            icon = encode_image(image_path)
+            # assume icon takes 2 characters
+            padding = b" " * (width - 2)
+            row.append(icon + padding)
+        else:
+            colored_text = (
+                color
+                + f"{col:<{width}}".encode()
+                + (AnsiStyles.RESET if color != AnsiStyles.DEFAULT else b"")
+            )
+            row.append(colored_text)
+    return b"".join(row).rstrip() + b"\n"
 
 
 def create_weather_table(current_day: date, width: int = 80) -> Table:
@@ -31,6 +90,84 @@ def create_weather_table(current_day: date, width: int = 80) -> Table:
     weather_table.add_column("Wind", style="green", no_wrap=True)
     weather_table.add_column("Cloud", style="magenta", no_wrap=True)
     return weather_table
+
+
+def get_wind_direction_arrow(degrees: float) -> str:
+    """
+    Convert wind direction in degrees to a corresponding arrow symbol.
+
+    >>> [get_wind_direction_arrow(d) for d in range(0, 361, 45)]
+    ['↓', '↙', '←', '↖', '↑', '↗', '→', '↘', '↓']
+    >>> get_wind_direction_arrow(359)
+    '↓'
+    >>> get_wind_direction_arrow(360)
+    '↓'
+    >>> get_wind_direction_arrow(361)
+    '↓'
+    """
+    directions = [
+        ("N", "↓"),
+        ("NE", "↙"),
+        ("E", "←"),
+        ("SE", "↖"),
+        ("S", "↑"),
+        ("SW", "↗"),
+        ("W", "→"),
+        ("NW", "↘"),
+    ]
+
+    degrees_per_direction = 360 / len(directions)
+    index = int(
+        (degrees % 360 + degrees_per_direction / 2) % 360 / degrees_per_direction
+    )
+
+    return directions[index][1]
+
+
+def print_weather_table(forecast_timesteps: Dict[datetime, dict]):
+    columns = [
+        ("Time", 10, AnsiStyles.DEFAULT),
+        ("", 10, AnsiStyles.DEFAULT),
+        ("Temp (°C)", 10, AnsiStyles.RED),
+        ("Rain (mm)", 10, AnsiStyles.LIGHT_BLUE),
+        ("Wind (m/s)", 10, AnsiStyles.DEFAULT),
+        ("Cloud (%)", 10, AnsiStyles.YELLOW),
+    ]
+
+    current_day = min(forecast_timesteps).date()
+    sys.stdout.buffer.write(
+        AnsiStyles.BOLD
+        + f"{current_day.strftime('%A %d. %B')}\n".encode()
+        + AnsiStyles.RESET
+    )
+    for timestamp, data in forecast_timesteps.items():
+        if timestamp.date() != current_day:
+            current_day = timestamp.date()
+            sys.stdout.buffer.write(
+                AnsiStyles.BOLD
+                + f"{current_day.strftime('%A %d. %B')}\n".encode()
+                + AnsiStyles.RESET
+            )
+        formatted_row = [
+            (timestamp.strftime("%H:%M"), columns[0][1], columns[0][2]),
+            ("", columns[1][1], columns[1][2]),
+            (f"{data['air_temperature']:.1f}°", columns[2][1], columns[2][2]),
+            (f"{data['precipitation_amount']:.1f}", columns[3][1], columns[3][2]),
+            (
+                f"{data['wind_speed']:.1f}{get_wind_direction_arrow(data['wind_from_direction'])}",
+                columns[4][1],
+                columns[4][2],
+            ),
+            (f"{data['cloud_area_fraction']:.0f}%", columns[5][1], columns[5][2]),
+        ]
+        sys.stdout.buffer.write(
+            format_table_row(
+                formatted_row,
+                image_column=1,
+                image_path=get_icon_path(data["symbol_code"]),
+            )
+        )
+    sys.stdout.buffer.flush()
 
 
 def get_selected_location(

@@ -53,6 +53,9 @@ yr = "yr_cli.cli:app"
 [tool.setuptools]
 packages = ["yr_cli"]
 
+[tool.setuptools.package-data]
+"yr_cli.icons" = ["*.png"]
+
 [tool.isort]
 profile = "black"
 multi_line_output = 3

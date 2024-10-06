@@ -19,6 +19,7 @@ def fetch_and_filter_forecast(
             ["instant", "details", "air_temperature"],
             ["next_6_hours", "details", "precipitation_amount"],
             ["instant", "details", "wind_speed"],
+            ["instant", "details", "wind_from_direction"],
             ["instant", "details", "cloud_area_fraction"],
         ],
     )
