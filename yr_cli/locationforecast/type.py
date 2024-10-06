@@ -1,4 +1,5 @@
 """https://api.met.no/weatherapi/locationforecast/2.0/swagger"""
+
 from typing import List, Literal, Optional, TypedDict
 
 

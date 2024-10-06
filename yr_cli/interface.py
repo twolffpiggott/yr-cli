@@ -3,7 +3,6 @@ import io
 import sys
 from datetime import date, datetime
 from functools import wraps
-from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import inquirer
@@ -134,20 +133,23 @@ def print_weather_table(forecast_timesteps: Dict[datetime, dict]):
         ("Cloud (%)", 10, AnsiStyles.YELLOW),
     ]
 
+    output = []
     current_day = min(forecast_timesteps).date()
-    sys.stdout.buffer.write(
+    output.append(
         AnsiStyles.BOLD
         + f"{current_day.strftime('%A %d. %B')}\n".encode()
         + AnsiStyles.RESET
     )
+
     for timestamp, data in forecast_timesteps.items():
         if timestamp.date() != current_day:
             current_day = timestamp.date()
-            sys.stdout.buffer.write(
+            output.append(
                 AnsiStyles.BOLD
                 + f"{current_day.strftime('%A %d. %B')}\n".encode()
                 + AnsiStyles.RESET
             )
+
         formatted_row = [
             (timestamp.strftime("%H:%M"), columns[0][1], columns[0][2]),
             ("", columns[1][1], columns[1][2]),
@@ -160,13 +162,22 @@ def print_weather_table(forecast_timesteps: Dict[datetime, dict]):
             ),
             (f"{data['cloud_area_fraction']:.0f}%", columns[5][1], columns[5][2]),
         ]
-        sys.stdout.buffer.write(
+        output.append(
             format_table_row(
                 formatted_row,
                 image_column=1,
                 image_path=get_icon_path(data["symbol_code"]),
             )
         )
+
+    full_output = b"".join(output)
+
+    # use buffering to display output as a single block
+    sys.stdout.buffer.write(b"\033[?2026h")
+    sys.stdout.buffer.flush()
+    sys.stdout.buffer.write(full_output)
+    sys.stdout.buffer.flush()
+    sys.stdout.buffer.write(b"\033[?2026l")
     sys.stdout.buffer.flush()
 
 
