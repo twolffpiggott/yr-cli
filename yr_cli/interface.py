@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import sys
 from datetime import date, datetime
 from functools import wraps
@@ -17,6 +18,7 @@ from rich.traceback import install
 from . import get_icon_path
 from .api import get_openstreetmap_locations
 from .cache import cache_location, clear_cache, get_cached_location
+from .maps import create_map_with_box
 
 OSC = b"\033]"
 ST = b"\007"
@@ -226,6 +228,10 @@ def get_location(query: str, limit: int, country_code: str) -> Optional[dict]:
         return None
     if len(locations) > 1:
         selected_location = select_location(locations)
+        if "ITERM_SESSION_ID" in os.environ:
+            create_map_with_box(
+                float(selected_location["lat"]), float(selected_location["lon"])
+            )
     else:
         selected_location = locations[0]
     return selected_location

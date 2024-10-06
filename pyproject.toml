@@ -28,6 +28,7 @@ dependencies = [
     "requests>=2.32.3",
     "requests-cache==1.2.1",
     "rich>=13.8.0",
+    "py-staticmaps==0.4.0",
     "typer>=0.12.5",
     "urllib3>=2.2.2",
 ]
