@@ -136,7 +136,7 @@ yr clear-cache
 
 # Development
 
-To install `yr_cli` for development, run:
+To install `yr-cli` for development, run:
 
 ```bash
 pip install -e '.[dev]'
