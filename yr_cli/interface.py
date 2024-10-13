@@ -1,6 +1,5 @@
 import base64
 import io
-import os
 import sys
 from datetime import date, datetime
 from functools import wraps
@@ -19,6 +18,7 @@ from . import get_icon_path
 from .api import get_openstreetmap_locations
 from .cache import cache_location, clear_cache, get_cached_location
 from .maps import create_map_with_box
+from .utils import get_output_method
 
 OSC = b"\033]"
 ST = b"\007"
@@ -200,11 +200,10 @@ def get_selected_location(
         cached_location = get_cached_location(location)
         if cached_location:
             selected_location = cached_location
-            if show_map:
-                if "ITERM_SESSION_ID" in os.environ:
-                    create_map_with_box(
-                        float(selected_location["lat"]), float(selected_location["lon"])
-                    )
+            if show_map and get_output_method() == "iterm2":
+                create_map_with_box(
+                    float(selected_location["lat"]), float(selected_location["lon"])
+                )
         else:
             selected_location = get_location(
                 query=location,
@@ -244,17 +243,16 @@ def get_location(
     if len(locations) > 1:
         selected_location = select_location(locations)
         # always show map if there are multiple locations
-        if "ITERM_SESSION_ID" in os.environ:
+        if get_output_method() == "iterm2":
             create_map_with_box(
                 float(selected_location["lat"]), float(selected_location["lon"])
             )
     else:
         selected_location = locations[0]
-        if show_map:
-            if "ITERM_SESSION_ID" in os.environ:
-                create_map_with_box(
-                    float(selected_location["lat"]), float(selected_location["lon"])
-                )
+        if show_map and get_output_method() == "iterm2":
+            create_map_with_box(
+                float(selected_location["lat"]), float(selected_location["lon"])
+            )
     return selected_location
 
 

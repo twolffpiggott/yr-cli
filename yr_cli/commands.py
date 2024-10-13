@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -9,6 +8,7 @@ from .interface import (
     print_weather_table,
 )
 from .locationforecast.data import fetch_and_filter_forecast
+from .utils import get_output_method
 
 
 @handle_command_errors
@@ -37,7 +37,7 @@ def now_command(
         selected_location, time_series
     )
 
-    if "ITERM_SESSION_ID" in os.environ:
+    if get_output_method() == "iterm2":
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
@@ -92,7 +92,7 @@ def summary_command(
         selected_location, time_series
     )
 
-    if "ITERM_SESSION_ID" in os.environ:
+    if get_output_method() == "iterm2":
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
@@ -164,7 +164,7 @@ def weekend_command(
         selected_location, time_series
     )
 
-    if "ITERM_SESSION_ID" in os.environ:
+    if get_output_method() == "iterm2":
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
