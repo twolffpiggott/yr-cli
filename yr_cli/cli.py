@@ -8,7 +8,7 @@ from .interface import display_clear_cache
 app = typer.Typer()
 
 
-@app.command()
+@app.command(help="Detailed forecast for the next 24 hours")
 def now(
     location: Optional[str] = typer.Argument(None),
     limit: int = typer.Option(10, help="Maximum number of location results"),
@@ -29,7 +29,7 @@ def now(
     )
 
 
-@app.command()
+@app.command(help="Summary forecast for the next <days> (default 5) days")
 def summary(
     location: Optional[str] = typer.Argument(None),
     days: int = typer.Option(5, help="Number of days for summary forecast"),
@@ -52,7 +52,7 @@ def summary(
     )
 
 
-@app.command()
+@app.command(help="Forecast for the next weekend")
 def weekend(
     location: Optional[str] = typer.Argument(None),
     limit: int = typer.Option(10, help="Maximum number of location results"),
@@ -73,7 +73,7 @@ def weekend(
     )
 
 
-@app.command()
+@app.command(help="Clear the cache of saved locations")
 def clear_cache():
     display_clear_cache()
 
