@@ -6,6 +6,20 @@
   <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/intro.gif" width="600">
 </p>
 
+# Table of contents
+
+- [Yr weather CLI](#yr-weather-cli)
+- [Table of contents](#table-of-contents)
+- [Features](#features)
+- [Snags](#snags)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Now](#now)
+    - [Summary](#summary)
+    - [Weekend](#weekend)
+    - [Clear cache](#clear-cache)
+- [Development](#development)
+
 # Features
 
 - Provides detailed forecasts for the next 24 hours, summary forecasts for the next `n` days, and forecasts for the next weekend
