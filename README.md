@@ -6,6 +6,26 @@
   <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/intro.gif" width="600">
 </p>
 
+# Features
+
+- Provides detailed forecasts for the next 24 hours, summary forecasts for the next `n` days, and forecasts for the next weekend
+- Enables location search by name and optionally displays a map of the selected location
+- Displays forecasts with images and icons in terminal with [iTerm2](https://iterm2.com) with automatic fallback to [Rich](https://github.com/Textualize/rich) output for other terminals
+- Forecasts provide the following information:
+   - Forecast interval
+   - Forecast summary icon
+   - Air temperature (°C)
+   - Precipitation amount (mm)
+   - Wind speed (m/s) and direction
+   - Cloud cover (%)
+- Displays forecasts at the highest time resolution available from yr's API (hourly short term, six-hour medium term)
+- Allows searches in different countries and handles timezone conversion automatically
+
+# Snags
+
+- [iTerm2](https://iterm2.com) is the only first-class citizen for image output
+- [tmux](https://github.com/tmux/tmux) is not yet supported
+
 # Installation
 
 ```bash
