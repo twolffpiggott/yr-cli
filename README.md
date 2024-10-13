@@ -113,6 +113,10 @@ yr summary 'de pakhuys' --days 7       Give a summary forecast for De Pakhuys, S
 
 ## Weekend
 
+<p align="center">
+  <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/yr_weekend.gif" width="600">
+</p>
+
 > Forecast for the next weekend
 
 ```bash
