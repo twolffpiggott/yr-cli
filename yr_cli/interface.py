@@ -188,17 +188,23 @@ def get_selected_location(
     limit: int,
     country_code: str,
     no_cache: bool,
+    show_map: bool,
 ) -> Optional[dict]:
     if location is None:
         location = prompt_location()
     if no_cache:
-        selected_location = get_location(location, limit, country_code)
+        selected_location = get_location(location, limit, country_code, show_map)
     else:
         cached_location = get_cached_location(location)
         if cached_location:
             selected_location = cached_location
+            if show_map:
+                if "ITERM_SESSION_ID" in os.environ:
+                    create_map_with_box(
+                        float(selected_location["lat"]), float(selected_location["lon"])
+                    )
         else:
-            selected_location = get_location(location, limit, country_code)
+            selected_location = get_location(location, limit, country_code, show_map)
             if selected_location:
                 cache_location(location, selected_location)
     return selected_location
@@ -221,19 +227,27 @@ def select_location(locations: List[dict]) -> dict:
     return answers["location"]
 
 
-def get_location(query: str, limit: int, country_code: str) -> Optional[dict]:
+def get_location(
+    query: str, limit: int, country_code: str, show_map: bool
+) -> Optional[dict]:
     locations = get_openstreetmap_locations(query, limit, country_code)
     if not locations:
         console.print("[bold red]Error:[/bold red] No locations found.")
         return None
     if len(locations) > 1:
         selected_location = select_location(locations)
+        # always show map if there are multiple locations
         if "ITERM_SESSION_ID" in os.environ:
             create_map_with_box(
                 float(selected_location["lat"]), float(selected_location["lon"])
             )
     else:
         selected_location = locations[0]
+        if show_map:
+            if "ITERM_SESSION_ID" in os.environ:
+                create_map_with_box(
+                    float(selected_location["lat"]), float(selected_location["lon"])
+                )
     return selected_location
 
 

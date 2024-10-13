@@ -16,9 +16,16 @@ def now(
     no_cache: bool = typer.Option(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
+    show_map: bool = typer.Option(
+        False, "--map", help="Show a map of the selected location"
+    ),
 ):
     now_command(
-        location=location, limit=limit, country_code=country_code, no_cache=no_cache
+        location=location,
+        limit=limit,
+        country_code=country_code,
+        no_cache=no_cache,
+        show_map=show_map,
     )
 
 
@@ -31,6 +38,9 @@ def summary(
     no_cache: bool = typer.Option(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
+    show_map: bool = typer.Option(
+        False, "--map", help="Show a map of the selected location"
+    ),
 ):
     summary_command(
         location=location,
@@ -38,6 +48,7 @@ def summary(
         limit=limit,
         country_code=country_code,
         no_cache=no_cache,
+        show_map=show_map,
     )
 
 
@@ -49,9 +60,16 @@ def weekend(
     no_cache: bool = typer.Option(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
+    show_map: bool = typer.Option(
+        False, "--map", help="Show a map of the selected location"
+    ),
 ):
     weekend_command(
-        location=location, limit=limit, country_code=country_code, no_cache=no_cache
+        location=location,
+        limit=limit,
+        country_code=country_code,
+        no_cache=no_cache,
+        show_map=show_map,
     )
 
 

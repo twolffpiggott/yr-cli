@@ -12,8 +12,20 @@ from .locationforecast.data import fetch_and_filter_forecast
 
 
 @handle_command_errors
-def now_command(location: Optional[str], limit: int, country_code: str, no_cache: bool):
-    selected_location = get_selected_location(location, limit, country_code, no_cache)
+def now_command(
+    location: Optional[str],
+    limit: int,
+    country_code: str,
+    no_cache: bool,
+    show_map: bool,
+):
+    selected_location = get_selected_location(
+        location=location,
+        limit=limit,
+        country_code=country_code,
+        no_cache=no_cache,
+        show_map=show_map,
+    )
     if not selected_location:
         return
 
@@ -29,17 +41,28 @@ def now_command(location: Optional[str], limit: int, country_code: str, no_cache
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
-            filtered_forecast_timesteps,
-            selected_location,
-            "24-Hour Weather Forecast",
+            forecast_timesteps=filtered_forecast_timesteps,
+            location=selected_location,
+            panel_title="24-Hour Weather Forecast",
         )
 
 
 @handle_command_errors
 def summary_command(
-    location: Optional[str], days: int, limit: int, country_code: str, no_cache: bool
+    location: Optional[str],
+    days: int,
+    limit: int,
+    country_code: str,
+    no_cache: bool,
+    show_map: bool,
 ):
-    selected_location = get_selected_location(location, limit, country_code, no_cache)
+    selected_location = get_selected_location(
+        location=location,
+        limit=limit,
+        country_code=country_code,
+        no_cache=no_cache,
+        show_map=show_map,
+    )
     if not selected_location:
         return
 
@@ -73,17 +96,27 @@ def summary_command(
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
-            filtered_forecast_timesteps,
-            selected_location,
-            "Summary Weather Forecast",
+            forecast_timesteps=filtered_forecast_timesteps,
+            location=selected_location,
+            panel_title="Summary Weather Forecast",
         )
 
 
 @handle_command_errors
 def weekend_command(
-    location: Optional[str], limit: int, country_code: str, no_cache: bool
+    location: Optional[str],
+    limit: int,
+    country_code: str,
+    no_cache: bool,
+    show_map: bool,
 ):
-    selected_location = get_selected_location(location, limit, country_code, no_cache)
+    selected_location = get_selected_location(
+        location=location,
+        limit=limit,
+        country_code=country_code,
+        no_cache=no_cache,
+        show_map=show_map,
+    )
     if not selected_location:
         return
 
@@ -135,7 +168,7 @@ def weekend_command(
         print_weather_table(filtered_forecast_timesteps)
     else:
         display_weather(
-            filtered_forecast_timesteps,
-            selected_location,
-            "Weekend Weather Forecast",
+            forecast_timesteps=filtered_forecast_timesteps,
+            location=selected_location,
+            panel_title="Weekend Weather Forecast",
         )
