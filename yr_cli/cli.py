@@ -17,7 +17,7 @@ def now(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
     show_map: bool = typer.Option(
-        False, "--map", help="Show a map of the selected location"
+        False, "--map", "-m", help="Show a map of the selected location"
     ),
 ):
     now_command(
@@ -39,7 +39,7 @@ def summary(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
     show_map: bool = typer.Option(
-        False, "--map", help="Show a map of the selected location"
+        False, "--map", "-m", help="Show a map of the selected location"
     ),
 ):
     summary_command(
@@ -61,7 +61,7 @@ def weekend(
         False, "--no-cache", help="Bypass cache and fetch fresh data"
     ),
     show_map: bool = typer.Option(
-        False, "--map", help="Show a map of the selected location"
+        False, "--map", "-m", help="Show a map of the selected location"
     ),
 ):
     weekend_command(
