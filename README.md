@@ -6,6 +6,12 @@
   <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/intro.gif" width="600">
 </p>
 
+# Installation
+
+```bash
+pip install yr-cli
+```
+
 # Usage
 
 > You can use the `--help` option to get more details about the commands and their options
@@ -84,15 +90,6 @@ Examples
 
 ```
 yr weekend 'sassies bouldering'       Give a weekend forecast for Sassies Bouldering, Rocklands, South Africa
-```
-
-pip install -e .
-
-# get a 24 hr forecast
-yr now silvermine
-
-# try it for another country
-yr now silvermine --country-code ca --no-cache
 ```
 
 ## Development
