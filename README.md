@@ -1,6 +1,6 @@
 # Yr Weather CLI
 
-[![Supported Python Versions](https://img.shields.io/pypi/pyversions/yr-cli/0.0.1)](https://pypi.org/project/yr-cli/) [![PyPI version](https://badge.fury.io/py/yr-cli.svg)](https://badge.fury.io/py/yr-cli)
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/yr-cli/0.0.2)](https://pypi.org/project/yr-cli/) [![PyPI version](https://badge.fury.io/py/yr-cli.svg)](https://badge.fury.io/py/yr-cli)
 
 [yr.no](https://www.yr.no/nb) has a great weather service but poor search functionality, especially for South African place names. `yr` is a simple CLI that combines [OpenStreetMaps search engine](https://nominatim.openstreetmap.org/ui/search.html) with [yr's location forecast](https://api.met.no/weatherapi/locationforecast/2.0/documentation) to provide precise weather forecasts from place names in the command line.
 

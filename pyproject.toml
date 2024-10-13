@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yr-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "A rich CLI for location-based weather forecasts"
 readme = "README.md"
 authors = [{ name = "Tim Wolff-Piggott", email = "twolffpiggott@gmail.com" }]
@@ -48,7 +48,7 @@ Homepage = "https://github.com/twolffpiggott/yr-cli"
 yr = "yr_cli.cli:app"
 
 [tool.setuptools]
-packages = ["yr_cli"]
+packages = ["yr_cli", "yr_cli.locationforecast"]
 
 [tool.setuptools.package-data]
 "yr_cli.icons" = ["*.png"]
