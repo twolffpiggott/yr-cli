@@ -56,6 +56,10 @@ yr <command> [options]
 
 ## Now
 
+<p align="center">
+  <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/yr_now.gif" width="600">
+</p>
+
 > Detailed forecast for the next 24 hours
 
 ```bash
