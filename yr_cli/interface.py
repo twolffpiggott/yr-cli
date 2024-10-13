@@ -193,7 +193,9 @@ def get_selected_location(
     if location is None:
         location = prompt_location()
     if no_cache:
-        selected_location = get_location(location, limit, country_code, show_map)
+        selected_location = get_location(
+            query=location, limit=limit, country_code=country_code, show_map=show_map
+        )
     else:
         cached_location = get_cached_location(location)
         if cached_location:
@@ -204,7 +206,12 @@ def get_selected_location(
                         float(selected_location["lat"]), float(selected_location["lon"])
                     )
         else:
-            selected_location = get_location(location, limit, country_code, show_map)
+            selected_location = get_location(
+                query=location,
+                limit=limit,
+                country_code=country_code,
+                show_map=show_map,
+            )
             if selected_location:
                 cache_location(location, selected_location)
     return selected_location
