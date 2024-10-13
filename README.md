@@ -20,6 +20,7 @@
     - [Summary](#summary)
     - [Weekend](#weekend)
     - [Clear cache](#clear-cache)
+- [Display fallback](#display-fallback)
 - [Development](#development)
 
 # Features
@@ -147,6 +148,14 @@ yr weekend 'sassies bouldering'       Give a weekend forecast for Sassies Boulde
 ```bash
 yr clear-cache
 ```
+
+# Display fallback
+
+If you are not using iTerm2, `yr` will fallback to using Rich to display the weather table.
+
+<p align="center">
+  <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/rich_fallback.gif" width="600">
+</p>
 
 # Development
 
