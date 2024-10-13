@@ -42,7 +42,7 @@ def now_command(
     else:
         display_weather(
             forecast_timesteps=filtered_forecast_timesteps,
-            location=selected_location,
+            selected_location=selected_location,
             panel_title="24-Hour Weather Forecast",
         )
 
@@ -97,7 +97,7 @@ def summary_command(
     else:
         display_weather(
             forecast_timesteps=filtered_forecast_timesteps,
-            location=selected_location,
+            selected_location=selected_location,
             panel_title="Summary Weather Forecast",
         )
 
@@ -169,6 +169,6 @@ def weekend_command(
     else:
         display_weather(
             forecast_timesteps=filtered_forecast_timesteps,
-            location=selected_location,
+            selected_location=selected_location,
             panel_title="Weekend Weather Forecast",
         )
