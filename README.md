@@ -6,7 +6,86 @@
   <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/intro.gif" width="600">
 </p>
 
+# Usage
+
+> You can use the `--help` option to get more details about the commands and their options
+
 ```bash
+yr <command> [options]
+```
+
+## Now
+
+> Detailed forecast for the next 24 hours
+
+```bash
+yr now <location>
+```
+
+Options
+
+```
+--limit                 INTEGER  Maximum number of location results [default: 10]
+--country-code          TEXT     Country code for location search [default: za]
+--no-cache                       Bypass cache and fetch fresh data
+--map           -m               Show a map of the selected location
+```
+
+Examples
+
+```
+yr now silvermine                            Give a detailed forecast for Silvermine, South Africa
+yr now silvermine -m --country-code ca       Give a detailed forecast for Silvermine, Canada, showing a map
+```
+
+## Summary
+
+> Summary forecast for the next <days> (default 5) days
+
+```bash
+yr summary <location>
+```
+
+Options
+
+```
+--days                  INTEGER  Number of days for summary forecast [default: 5]
+--limit                 INTEGER  Maximum number of location results [default: 10]
+--country-code          TEXT     Country code for location search [default: za]
+--no-cache                       Bypass cache and fetch fresh data
+--map           -m               Show a map of the selected location
+```
+
+Examples
+
+```
+yr summary 'de pakhuys' --limit 5      Give a summary forecast for De Pakhuys, South Africa with at most 5 results
+yr summary 'de pakhuys' --days 7       Give a summary forecast for De Pakhuys, South Africa for the next 7 days
+```
+
+## Weekend
+
+> Forecast for the next weekend
+
+```bash
+yr weekend <location>
+```
+
+Options
+
+```
+--limit                 INTEGER  Maximum number of location results [default: 10]
+--country-code          TEXT     Country code for location search [default: za]
+--no-cache                       Bypass cache and fetch fresh data
+--map           -m               Show a map of the selected location
+```
+
+Examples
+
+```
+yr weekend 'sassies bouldering'       Give a weekend forecast for Sassies Bouldering, Rocklands, South Africa
+```
+
 pip install -e .
 
 # get a 24 hr forecast
