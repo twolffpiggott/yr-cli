@@ -112,7 +112,15 @@ Examples
 yr weekend 'sassies bouldering'       Give a weekend forecast for Sassies Bouldering, Rocklands, South Africa
 ```
 
-## Development
+## Clear cache
+
+> Clear the cache of saved locations
+
+```bash
+yr clear-cache
+```
+
+# Development
 
 To install `yr_cli` for development, run:
 
