@@ -44,7 +44,7 @@ def create_map_with_box(latitude, longitude, box_size_km=1, zoom=14):
     context.add_object(box)
     context.set_center(center)
     context.set_zoom(zoom)
-    image = context.render_pillow(1200, 800)
+    image = context.render_pillow(1000, 600)
 
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
