@@ -1,0 +1,31 @@
+name: Publish Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  test_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: pip
+        cache-dependency-path: pyproject.toml
+    - name: Install dependencies
+      run: |
+        pip install '.[test]'
+    - name: Test with pytest
+      run: |
+        pytest --doctest-modules yr_cli
+    - name: Install pypa/build
+      run: python -m pip install build --user
+    - name: Build a binary wheel and a source tarball
+      run: python -m build --sdist --wheel --outdir dist/ .
+    - name: Publish distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
