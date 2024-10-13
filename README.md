@@ -84,6 +84,10 @@ yr now silvermine -m --country-code ca       Give a detailed forecast for Silver
 
 ## Summary
 
+<p align="center">
+  <img src="https://github.com/twolffpiggott/yr-cli/raw/main/imgs/yr_summary.gif" width="600">
+</p>
+
 > Summary forecast for the next <days> (default 5) days
 
 ```bash
